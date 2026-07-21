@@ -5,6 +5,7 @@ import { InsightCard } from "@/components/ui/InsightCard";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
+import { ScrollReveal, StaggerGrid, staggerItem } from "@/components/ui/ScrollReveal";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { getStudents, getAttendance, getBatches, getTodayAttendance, getFees, getAnnouncements } from "@/lib/storage";
@@ -18,12 +19,22 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
 const itemAnim = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+};
+
+const CHART_TOOLTIP_STYLE = {
+  background: "rgba(15,15,24,0.96)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 12,
+  color: "#F2F2F7",
+  fontSize: 12,
+  backdropFilter: "blur(12px)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
 };
 
 export default function AdminDashboard() {
@@ -77,9 +88,23 @@ export default function AdminDashboard() {
       <motion.div variants={container} initial="hidden" animate="show" className="space-y-7">
         <motion.div variants={itemAnim} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-[#FAFAFA] tracking-tight">{greeting}, Brightburn Admin</h1>
-            <p className="text-sm text-[#B6B6C2] flex items-center gap-2 mt-0.5">
-              <Calendar size={14} />
+            <h1 className="text-[1.25rem] font-bold text-[#F2F2F7] tracking-tight" aria-label={`${greeting}, Brightburn Admin`}>
+              {greeting},{" "}
+              {["Brightburn", "Admin"].map((word, i) => (
+                <motion.span
+                  key={word}
+                  className="inline-block mr-[0.2em]"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  aria-hidden="true"
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </h1>
+            <p className="text-[12.5px] text-[#9898AE] flex items-center gap-2 mt-0.5">
+              <Calendar size={13} />
               {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
@@ -129,13 +154,15 @@ export default function AdminDashboard() {
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyTrend} barGap={2}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="month" stroke="#737380" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#737380" fontSize={11} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "rgba(22,22,29,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#FAFAFA", fontSize: 12, backdropFilter: "blur(8px)" }} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                  <Bar dataKey="Present" fill="#22C55E" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                  <Bar dataKey="Absent" fill="#EF4444" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                <BarChart data={monthlyTrend} barGap={3} barCategoryGap="28%">
+                  <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="month" stroke="#5F5F75" fontSize={10.5} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#5F5F75" fontSize={10.5} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} cursor={{ fill: "rgba(255,255,255,0.025)" }} />
+                  <Bar dataKey="Present" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={14}
+                    animationDuration={900} animationEasing="ease-out" />
+                  <Bar dataKey="Absent" fill="#FF4F7A" radius={[4, 4, 0, 0]} maxBarSize={14}
+                    animationDuration={900} animationEasing="ease-out" animationBegin={100} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -149,19 +176,35 @@ export default function AdminDashboard() {
             <div className="h-64 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={feeData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value">
-                    {feeData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
+                  <Pie
+                    data={feeData}
+                    cx="50%" cy="50%"
+                    innerRadius={58} outerRadius={88}
+                    paddingAngle={5}
+                    dataKey="value"
+                    animationDuration={900}
+                    animationEasing="ease-out"
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    {feeData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: "rgba(22,22,29,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#FAFAFA", fontSize: 12, backdropFilter: "blur(8px)" }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-col gap-3 ml-4">
-                {feeData.map((d) => (
-                  <div key={d.name} className="flex items-center gap-2 text-xs">
+                {feeData.map((d, i) => (
+                  <motion.div
+                    key={d.name}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex items-center gap-2 text-xs"
+                  >
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                    <span className="text-[#B6B6C2]">{d.name}</span>
-                    <span className="text-[#FAFAFA] font-medium">₹{d.value.toLocaleString()}</span>
-                  </div>
+                    <span className="text-[#9898AE]">{d.name}</span>
+                    <span className="text-[#F2F2F7] font-semibold">₹{d.value.toLocaleString()}</span>
+                  </motion.div>
                 ))}
               </div>
             </div>
